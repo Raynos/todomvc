@@ -1,19 +1,19 @@
 var Elements = require("./elements")
     , Titles = require("./titles")
     , Entity = require("./entity")
+    , prepend = require("dom-insert").prepend
+    , RenderTodos = require("./render")
 
 module.exports = TodoList
 
-function TodoList(parentElement, set) {
+function TodoList(parentElement, doc) {
     var elems = Elements()
         , titles = Titles(elems.elements.newTodo)
-        , entity = Entity(set)
+        , entity = Entity(doc)
+        , renderTodos = RenderTodos(entity.todos)
 
     prepend(parentElement, elems.root)
 
     entity.createFromTitle(titles)
-}
 
-function prepend(parent, elem) {
-    parent.insertBefore(elem, parent.firstChild)
 }

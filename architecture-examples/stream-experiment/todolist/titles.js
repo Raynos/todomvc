@@ -1,9 +1,8 @@
 var events = require("events-stream")
     , filter = require("lazy-filter-stream")
+    , forEach = require("forEach-stream")
     , map = require("lazy-map-stream")
-    , uuid = require("node-uuid")
-    , duplex = require("duplexer")
-    , to = require("write-stream")
+    , compose = require("composite")
     , ENTER = 13
 
 module.exports = Titles
@@ -12,7 +11,7 @@ function Titles(newTodoField) {
     var presses = events(newTodoField, "keypress")
         , enters = filter(presses, isEnter)
         , textFields = map(enters, prop("target"))
-        , titles = map(textFields, prop("value"))
+        , titles = map(textFields, compose(method("trim"), prop("value")))
         , validTitles = filter(titles, isTruthy)
 
     forEach(textFields, clearField)
@@ -28,10 +27,6 @@ function Titles(newTodoField) {
     }
 }
 
-function forEach(stream, iterator) {
-    return stream.pipe(to(iterator))
-}
-
 function isTruthy(item) {
     return !!item
 }
@@ -41,5 +36,13 @@ function prop(propertyName) {
 
     function getProperty(item) {
         return item[propertyName]
+    }
+}
+
+function method(propertyName) {
+    return callMethod
+
+    function callMethod(item) {
+        return item[propertyName]()
     }
 }

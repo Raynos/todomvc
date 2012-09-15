@@ -1,59 +1,10 @@
-var ENTER = 13
-    , events = require("events-stream")
-    , filter = require("lazy-filter-stream")
-    , map = require("lazy-map-stream")
-    , uuid = require("node-uuid")
-    , duplex = require("duplexer")
+var TodoList = require("./todolist")
     , crdt = require("crdt")
-    , to = require("write-stream")
 
-var todos = TodoListView(document.getElementById("new-todo"))
-    , todoSet = new crdt.Set()
+var todoDoc = new crdt.Doc()
+    , body = document.body
 
-function TodoListView(elem) {
-    var presses = events(elem, "keypress")
-        , enters = filter(presses, isEnter)
-        , textFields = map(enters, prop("target"))
-        , titles = map(textFields, prop("value"))
-        , validTitles = filter(titles, isTruthy)
-        , todos = map(validTitles, createTodo)
-
-    forEach(textFields, clearField)
-
-    return duplex(todos, null)
-
-    function isEnter(event) {
-        return event.keyCode === ENTER
-    }
-
-    function createTodo(title) {
-        return {
-            id: uuid()
-            , title: title
-            , done: false
-        }
-    }
-
-    function clearField(field) {
-        field.value = ""
-    }
-}
-
-function forEach(stream, iterator) {
-    return stream.pipe(to(iterator))
-}
-
-function isTruthy(item) {
-    return !!item
-}
-
-function prop(propertyName) {
-    return getProperty
-
-    function getProperty(item) {
-        return item[propertyName]
-    }
-}
+TodoList(body, todoDoc)
 
 /*
 var presses = DOMEventStream(document.documentElement, "keypress")
