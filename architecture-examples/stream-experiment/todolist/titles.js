@@ -3,6 +3,10 @@ var events = require("events-stream")
     , forEach = require("forEach-stream")
     , map = require("lazy-map-stream")
     , compose = require("composite")
+    , pluck = require("pluck-stream")
+    , prop = require("prop-iterator")
+    , method = require("method-iterator")
+    , isTruthy = require("is-truthy")
     , ENTER = 13
 
 module.exports = Titles
@@ -10,7 +14,7 @@ module.exports = Titles
 function Titles(newTodoField) {
     var presses = events(newTodoField, "keypress")
         , enters = filter(presses, isEnter)
-        , textFields = map(enters, prop("target"))
+        , textFields = pluck(enters, "target")
         , titles = map(textFields, compose(method("trim"), prop("value")))
         , validTitles = filter(titles, isTruthy)
 
@@ -24,25 +28,5 @@ function Titles(newTodoField) {
 
     function clearField(field) {
         field.value = ""
-    }
-}
-
-function isTruthy(item) {
-    return !!item
-}
-
-function prop(propertyName) {
-    return getProperty
-
-    function getProperty(item) {
-        return item[propertyName]
-    }
-}
-
-function method(propertyName) {
-    return callMethod
-
-    function callMethod(item) {
-        return item[propertyName]()
     }
 }

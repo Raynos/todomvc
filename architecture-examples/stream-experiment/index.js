@@ -1,10 +1,14 @@
 var TodoList = require("./todolist")
+    , prepend = require("insert").prepend
     , crdt = require("crdt")
 
 var todoDoc = new crdt.Doc()
     , body = document.body
 
-TodoList(body, todoDoc)
+var todoListElements = TodoList(todoDoc)
+
+// prepend the todoList to the body
+prepend(body, todoListElements.root)
 
 /*
 var presses = DOMEventStream(document.documentElement, "keypress")
