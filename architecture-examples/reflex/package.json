@@ -12,14 +12,18 @@
     "web": "https://github.com/addyosmani/todomvc"
   },
   "scripts": {
-    "browserify": "browserify --watch --debug --entry ./main.js --outfile ./js/app.js"
+    "browserify": "node ./node_modules/browserify/bin/cmd.js --watch --debug --entry ./main.js --outfile ./js/app.js"
   },
   "bugs": {
     "url": "https://github.com/addyosmani/todomvc/issues/"
   },
   "dependencies": {
-    "reflex": "git://github.com/Gozala/reflex.git#master",
-    "reducers": "git://github.com/Gozala/reducers.git#experiment/browser",
+    "reflex": "0.0.1",
+    "reducers": "0.1.0",
+    "dom-reduce": "0.0.1",
     "compound": ">=0.0.1"
+  },
+  "devDependencies": {
+    "browserify": ">=1.16.1"
   }
 }

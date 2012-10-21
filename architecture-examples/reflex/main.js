@@ -1,6 +1,6 @@
 /* vim:set ts=2 sw=2 sts=2 expandtab */
-/*jshint asi: true undef: true es5: true node: true  devel: true browser: true
-         forin: true latedef: false globalstrict: true */
+/*jshint asi: true undef: true es5: true node: true  devel: true
+         forin: true latedef: false globalstrict: true browser: true */
 'use strict';
 
 window.require = require;
@@ -8,15 +8,13 @@ window.require = require;
 // Imports
 // -----------------------------------------------------------------------------
 
-var open = require('reducers/dom').open
+var open = require("dom-reduce/event")
 var compound = require("compound")
-var hub = require('reducers/hub')
-var core = require('reducers/core'),
-    filter = core.filter,
-    map = core.map,
-    reductions = core.reductions
-
-var reduce = require('reducers/accumulator').reduce
+var hub = require("reducers/hub")
+var filter = require("reducers/filter")
+var map = require("reducers/map")
+var reductions = require("reducers/reductions")
+var reduce = require('reducers/reduce')
 
 // Helper Functions
 // -----------------------------------------------------------------------------
