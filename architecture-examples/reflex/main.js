@@ -1,115 +1,86 @@
-/* vim:set ts=2 sw=2 sts=2 expandtab */
-/*jshint asi: true undef: true es5: true node: true  devel: true
-         forin: true latedef: false globalstrict: true browser: true */
-'use strict';
-
-window.require = require;
-
-// Imports
-// -----------------------------------------------------------------------------
-
-var open = require("dom-reduce/event")
-var compound = require("compound")
-var hub = require("reducers/hub")
-var filter = require("reducers/filter")
-var map = require("reducers/map")
+var state = require("reflex/state")
+var channel = require("reducers/channel")
 var reductions = require("reducers/reductions")
-var reduce = require('reducers/reduce')
+var reduce = require("reducers/reduce")
+var emit = require("reducers/emit")
+var writer = require("reflex/writer")
+var diff = state.diff
+var patch = state.patch
 
-// Helper Functions
-// -----------------------------------------------------------------------------
+var appState = channel()
 
-function id() {
-  /**
-  Function returns generated unique `id` when invoked.
-  **/
-  return (Date.now()).toString(32)
-}
+var todoList = collectionWriter(function swap(view, state) {
+  console.log("swap", arguments)
 
+  if ("title" in state) {
+    view.querySelector("label").textContent = state.title
+  }
 
-// Mutates an element by capturing, removing and returning it's value.
-var removeValue = function (el) {
-  var value = el.value;
-  el.value = '';
-  return value;
-};
+  if ("completed" in state) {
+    view.querySelector(".toggle").checked = state.completed
+  }
 
-// Create a new Todo element from a template by passing an
-// object as a data model.
-var makeTaskView = function (model) {
-  var view = document.createElement("li")
-  view.setAttribute("id", model.cid)
-  view.innerHTML = "<div class=view><input class=toggle type=checkbox>" +
-                      "<label>" + model.title + "</label>" +
-                      "<button class=destroy></button>"
-                      "</div>" +
-                      "<input class=edit value='" + model.title + "'>"
   return view
-}
+}, function close(view, container) {
+  container.removeChild(view)
+}, function open(state, container) {
+  var node = document.getElementById('template').cloneNode(true)
+  node.hidden = false
 
-// Prepend an element to the top of a parent element.
-// This helper could be replaced if you decide to use jQuery.
-var prepend = function (parent, view) {
-  var firstChild = parent.firstChild
-  parent.insertBefore(view, firstChild)
-}
+  if (state.title) {
+    node.querySelector("label").textContent = state.title
+  }
 
-// Create new TODO
-// -----------------------------------------------------------------------------
+  if (state.completed) {
+    node.querySelector(".toggle").checked = state.completed
+  }
 
-var inputs = (compound
-  (open, "keypress")
-  (filter, function isEnter(event) { return event.keyCode === 13 })
-  (document.documentElement))
+  container.appendChild(node)
 
-var newTasks = (compound
-  (map, function(event) { return event.target.value })
-  (filter, function(title) { return !!title })
-  (map, function(title) {
-    return { id: id(), title: title, done: false }
-  })
-  (hub)
-  (inputs))
-
-var newViews = (compound
-  (map, makeTaskView)
-  (newTasks))
-
-var count = reductions(newTasks, function(x) {
-  return x + 1
-}, 0)
-
-// Add the todo elements to the DOM as they stream in.
-reduce(newViews, function(container, view) {
-  prepend(container, view)
-  return container
-}, document.getElementById("todo-list"))
-
-reduce(inputs, function(_, event) {
-  event.target.value = ""
+  return node
 })
 
-// Update the item count for each item entered.
-reduce(count, function(view, n) {
-  view.textContent = n
-  return view
-}, document.getElementById("todo-count"))
+var appStream = reductions(appState, function (prevState, delta) {
+  return patch(prevState, delta)
+}, state())
 
-function getViewID(element) {
-  return element.parentElement.parentElement.getAttribute('id')
-}
-
-var completeUpdates = (compound
-  (open, "change")
-  (map, function(event) { return event.target })
-  (map, function(target) {
-    return { id: getViewID(target), done: target.checked }
-  })
-  (document.documentElement))
-
-reduce(completeUpdates, function(_, update) {
-  document.getElementById(update.id).className = update.done ? "completed" : ""
+var count = reductions(appStream, function (_, state) {
+  console.log("count", state)
+  return Object.keys(state).map(function (id) {
+    return state[id].completed
+  }).filter(function (v) {
+    return !v
+  }).length
 })
 
+writer(function swap(view, number) {
+  console.log("state", arguments)
+  view.textContent = number
+})(count, document.querySelector("#todo-count"))
 
+todoList(appStream, document.querySelector("#todo-list"))
 
+window.appState = appState
+window.emit = emit
+
+function collectionWriter(swap, close, open) {
+  var hash = {}
+
+  return function write(input, seed) {
+    reduce(input, function (acc, value) {
+      var delta = diff(value)
+      Object.keys(delta).forEach(function (id) {
+        var item = delta[id]
+
+        if (id in hash) {
+          hash[id] = swap(hash[id], item)
+        } else if (item === null) {
+          close(hash[id], seed)
+          hash[id] = null
+        } else {
+          hash[id] = open(item, seed)
+        }
+      })
+    })
+  }
+}
